@@ -1,0 +1,64 @@
+version: '3'
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: .docker/nginx/Dockerfile
+    ports:
+      - "${HTTP_PORT}:80"
+      - "${HTTPS_PORT}:443"
+    stdin_open: true
+    tty: true
+    volumes:
+      - "./src/:/opt/app"
+      - "./.docker/nginx/certs/nginx-selfsigned.crt:/etc/ssl/certs/nginx-selfsigned.crt"
+      - "./.docker/nginx/certs/nginx-selfsigned.key:/etc/ssl/private/nginx-selfsigned.key"
+      - "./.docker/nginx/certs/dhparam.pem:/etc/ssl/certs/dhparam.pem"
+      - "./.docker/nginx/nginx.conf:/etc/nginx/nginx.conf"
+      - "./.docker/nginx/app.conf:/etc/nginx/conf.d/app.conf"
+      - "./shared:/opt/shared"
+    command: nginx
+    privileged: true
+    networks:
+      - app-tier
+
+  php-fpm:
+    build:
+      context: .
+      dockerfile: .docker/php-fpm/8.1/Dockerfile
+    volumes:
+      - "./src/:/opt/app"
+      - "./.docker/php-fpm/8.1/php-fpm.conf:/etc/php-fpm.conf"
+      - "./.docker/php-fpm/8.1/www.conf:/etc/php-fpm.d/www.conf"
+      - "./.docker/php-fpm/8.1/php.ini:/etc/php.ini"
+      - "./shared:/opt/shared"
+    environment:
+      - DOCKER_ENV=1
+    stdin_open: true
+    tty: true
+    command: php-fpm
+    privileged: true
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - app-tier
+
+  database:
+    image: 'bitnami/mariadb:10.2'
+    volumes:
+      - mariadb_data:/bitnami/mariadb
+      - "./shared:/opt/shared"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    privileged: false
+    networks:
+      - app-tier
+    ports:
+      - "${DB_PORT}:3306"
+
+volumes:
+  mariadb_data:
+
+networks:
+  app-tier:
+    driver: bridge
