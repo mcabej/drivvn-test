@@ -1,11 +1,19 @@
-# docker
-Docker environment for projects
+# Drivvn Backend Task - Symfony
 
-# .env
-Create a .env file (or cp .env.dist .env) and make sure the ports do not conflict with any other running projects
+[Go implementation](https://github.com/mcabej/backend-task)
 
-# customisations
-Create docker-compose.override.yml ad put any additional volumes etc in there
+## Requirements
+- Docker
 
-# running
-Use 'docker-compose up' NOT 'docker compose up'! The latter will *not* read the override yaml file
+## Starting up
+1. Run `docker compose up --build -d`
+2. Run `docker exec -it -w /opt/app drivvn-test-php-fpm-1 php bin/console doctrine:migrations:migrate`
+3. API is now ready at https://localhost:9000/api/car
+
+## Run Test
+1. Run `docker exec -it -w /opt/app drivvn-test-php-fpm-1 php bin/phpunit`
+
+## Limitations
+- No frontend
+- No api endpoints for colors
+
